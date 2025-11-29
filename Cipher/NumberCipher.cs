@@ -65,50 +65,56 @@ class NumberCipher{
     }
 
     //BASE 1-62 CONVERTER
-   public static string Base_Encode(string text, int targetBase){
-        string digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    public static string Base_Encode(int number, int targetBase){
+        const string digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
         if (targetBase < 2 || targetBase > digits.Length)
             throw new ArgumentException($"Base must be between 2 and {digits.Length}");
 
-        digits = digits.Substring(0, targetBase); // limit to chosen base
+        // Zero is a special case
+        if (number == 0)
+            return "0";
+
+        bool isNegative = number < 0;
+        number = Math.Abs(number);
+
         string result = "";
 
-        foreach (char c in text){
-            int value = (int)c; // ASCII
-            string encoded = "";
-
-            while (value > 0){
-                encoded = digits[value % targetBase] + encoded;
-                value /= targetBase;
-            }
-
-            result += (encoded == "" ? digits[0].ToString() : encoded) + " ";
+        while (number > 0){
+            int remainder = number % targetBase;
+            result = digits[remainder] + result;
+            number /= targetBase;
         }
 
-        return result.Trim();
+        return isNegative ? "-" + result : result;
     }
 
-    public static string Base_Decode(string encoded, int sourceBase){
-        string digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+    public static int Base_Decode(string encoded, int sourceBase)
+    {
+        const string digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
         if (sourceBase < 2 || sourceBase > digits.Length)
             throw new ArgumentException($"Base must be between 2 and {digits.Length}");
 
-        digits = digits.Substring(0, sourceBase);
+        if (string.IsNullOrWhiteSpace(encoded))
+            throw new ArgumentException("Encoded string cannot be empty.");
 
-        string[] parts = encoded.Split(' ');
-        string result = "";
+        bool isNegative = encoded.StartsWith("-");
+        if (isNegative)
+            encoded = encoded.Substring(1);
 
-        foreach (string part in parts){
-            int value = 0;
+        int result = 0;
 
-            foreach (char c in part)
-                value = value * sourceBase + digits.IndexOf(c);
+        foreach (char c in encoded){
+            int value = digits.IndexOf(c);
+            if (value < 0 || value >= sourceBase)
+                throw new ArgumentException($"Invalid character '{c}' for base {sourceBase}.");
 
-            result += (char)value;
+            result = result * sourceBase + value;
         }
 
-        return result;
+        return isNegative ? -result : result;
     }
+
 } 
